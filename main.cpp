@@ -117,6 +117,43 @@ void copyState(vector<int>**temp, vector<int>**e, int begin){
         }
     }
 }
+int countNFAStates(vector<int>**NFA){
+    int answer=0;
+    for(int i=0;i<100;i++){
+        int isNull=0;
+        for(int j=0;j<75;j++){
+            if(NFA[i][j].size()!=0){
+                isNull=1;
+                break;
+            }
+        }
+
+        if(isNull==0)break;
+        answer++;
+    }
+    return answer;
+}
+vector<int>**orNFA(vector<int>**left, vector<int>**right){
+
+    vector<int>**temp=new vector<int>*[100];
+    for(int i=0;i<100;i++){
+        temp[i]=new vector<int>[75];
+    }
+    int stateNum1= countNFAStates(left);
+    int stateNum2= countNFAStates(right);
+
+    temp[0][74].push_back(1);
+    temp[0][74].push_back(stateNum1+1);
+    copyState(temp, left, 1);
+    temp[stateNum1][74].push_back(stateNum1+stateNum2+1);
+    copyState(temp, right, stateNum1+1);
+    temp[stateNum1+stateNum2][74].push_back(stateNum1+stateNum2+1);
+    for(int i=0;i<75;i++){
+        temp[stateNum1+stateNum2+1][i].push_back(-1);
+    }
+
+    return temp;
+}
 vector<int>** generateNFA(string postfix, int &stateNum)
 {
     vector<int>**temp,**e1,**e2,**e;
@@ -128,63 +165,14 @@ vector<int>** generateNFA(string postfix, int &stateNum)
             case '|':
                 e2 = operation.top();
                 operation.pop();
-
                 e1 = operation.top();
-                for(int i=0;i<100;i++){
-                    for(int j=0;j<74;j++){
-                        vector<int>temp=e1[i][j];
-                        for(int k=0;k<temp.size();k++)cout<<temp[k];
-                        cout<<" ";
-                    }
-                    cout<<endl;
-                }
                 operation.pop();
-                temp=new vector<int>*[100];
-                for(int i=0;i<100;i++){
-                    temp[i]=new vector<int> [75];
+                temp=orNFA(e1, e2);
 
-                }
-
-                stateNum1=0, stateNum2=0;
-                for(int i=0;i<100;i++){
-                    int isNull=0;
-                    for(int j=0;j<75;j++){
-                        if(e1[i][j].size()!=0){
-                            isNull=1;
-                            break;
-                        }
-                    }
-
-                    if(isNull==0)break;
-                    stateNum1++;
-                }
-                for(int i=0;i<100;i++){
-                    int isNull=0;
-                    for(int j=0;j<75;j++){
-                        if(e2[i][j].size()!=0){
-                            isNull=1;
-                            break;
-                        }
-                    }
-
-                    if(isNull==0)break;
-                    stateNum2++;
-                }
-                temp[0][74].push_back(1);
-                copyState(temp, e1, 1);
-                temp[stateNum1][74].push_back(stateNum1+stateNum2+1);
-                temp[0][74].push_back(stateNum1+1);
-                copyState(temp, e2, stateNum1+1);
-                temp[stateNum1+stateNum2][74].push_back(stateNum1+stateNum2+1);
-                for(int i=0;i<75;i++){
-                    temp[stateNum1+stateNum2+1][i].push_back(-1);
-                }
-                //display(temp);
                 operation.push(temp);
                 break;
             case '*':
                 e = operation.top();
-                //display(e);
                 operation.pop();
                 temp=new vector<int>*[100];
                 for(int i=0;i<100;i++){
@@ -275,19 +263,7 @@ vector<int>** generateNFA(string postfix, int &stateNum)
     }
     e = operation.top();
     operation.pop();
-    stateNum=0;
-    for(int i=0;i<100;i++){
-        int isNull=0;
-        for(int j=0;j<75;j++){
-            if(e1[i][j].size()!=0){
-                isNull=1;
-                break;
-            }
-        }
-
-        if(isNull==0)break;
-        stateNum++;
-    }
+    stateNum= countNFAStates(e);
     return e;
 }
 
@@ -383,6 +359,7 @@ int find(vector<int>a, int b){
     return -1;
 }
 int **convertDFA(vector<int>**NFA, vector<int>&indexes, int &statesNum, vector<int>&isEnd, int num1){
+    //cout<<num1<<endl;
     int tNum=0;
     int symbol;
     for(int i=0;i<num1;i++){
@@ -467,13 +444,22 @@ int lexicalAnalysis(int **DFA, string input, vector<char>character, vector<int>i
     int nowState=0;
     string s1="";
     while(true){
-        while(input[pos]==' '){
+        if(input[pos]==' '){
+            if(isEnd[nowState]){
+                answer.push_back(s1);
+                nowState=0;
+                s1="";
+            }
+            else{
+                return -1;
+            }
             pos++;
         }
         int t1=find(character, input[pos]);
         if(t1==-1||DFA[nowState][t1]==-1){
             if(isEnd[nowState]){
                 answer.push_back(s1);
+                nowState=0;
                 s1="";
             }
             else{
@@ -492,21 +478,38 @@ int lexicalAnalysis(int **DFA, string input, vector<char>character, vector<int>i
 }
 
 int main() {
-    string str1="l(l|d|c)*";
-    string keyword="PROGRAM|BEGIN|END|CONST|VAR|WHILE|DO|IF|THEN";
-    string identifier_1="a|b|c|d|e|f|q|w|r|t|y|u|i|o|p|s|g|h|j|k|l|z|x|v|n|m";
-    string identifier_2="Q|W|E|R|T|Y|U|I|O|P|A|S|D|F|G|H|J|K|L|Z|X|C|V|B|N|M";
-    string identifier_3="0|1|2|3|4|5|6|7|8|9";
-    string identifier="("+identifier_1+"|"+identifier_2+")"+"("+identifier_3+"|"+
-            identifier_1+"|"+identifier_2+")*";
-    string integer = "(0|((1|2|3|4|5|6|7|8|9)(0|1|2|3|4|5|6|7|8|9)*))";
-    string delimiter = "+|-|*|/|=|:=|>|<|,|;|(|)|<>|>=|<=";
+    string keyword_1="PROGRAM";
+    string keyword_2="BEGIN";
+    string keyword_3="END";
+    string keyword_4="CONST";
+    string keyword_5="VAR";
+    string keyword_6="WHILE";
+    string keyword_7="DO";
+    string keyword_8="IF";
+    string keyword_9="THEN";
+    string str1="a|b|c|d|e|f|q|w|r|t|y|u|i|o|p|s|g|h|j|k|l|z|x|v|n|m";
+    string str2="Q|W|E|R|T|Y|U|I|O|P|A|S|D|F|G|H|J|K|L|Z|X|C|V|B|N|M";
+    string str3="0|1|2|3|4|5|6|7|8|9";
+    string identifier_1=str1+"|"+str2;
+    string identifier_2="("+str1+"|"+str2+"|"+str3+")*";
+    string integer_1 = "(1|2|3|4|5|6|7|8|9)(0|1|2|3|4|5|6|7|8|9)*";
+    string integer_2 = "0";
+    string delimiter_1 = "+|-|*|/|=|>|<|,|;|(|)";
+    string delimiter_2=":=";
+    string delimiter_3="<>";
+    string delimiter_4=">=";
+    string delimiter_5="<=";
     string str2=generateSuffix(str1);
-    cout<<str2;
+    //cout<<str2;
     int stateNum;
-    vector<int>** NFA= generateNFA(str2, stateNum);
+    int stateNum1;
 
-    //display(NFA);
+    vector<int>** NFA= generateNFA(str2, stateNum);
+    vector<int>**NFA_1= generateNFA(generateSuffix(str3), stateNum1);
+    NFA= orNFA(NFA, NFA_1);
+    stateNum+=stateNum1;
+    stateNum+=2;
+   // display(NFA);
     vector<int>isEnd;
     vector<int>indexes;
     vector<string>answer;
@@ -514,8 +517,20 @@ int main() {
     int num;
     int ** DFA= convertDFA(NFA, indexes, num, isEnd, stateNum);
     for(int i=0;i<indexes.size()-1;i++)character.push_back(mapping[indexes[i]]);
-    string input="llld lld";
+    for(int i=0;i<indexes.size()-1;i++)cout<<character[i]<<" ";
+    cout<<endl;
+    for(int i=0;i<num;i++){
+        for(int j=0;j<indexes.size()-1;j++)cout<<DFA[i][j]<<" ";
+        cout<<endl;
+    }
+    cout<<"end:"<<endl;
+    for(int i=0;i<isEnd.size();i++){
+        if(isEnd[i]==1)cout<<i<<" ";
+    }
+    cout<<endl;
+    string input="01 0123";
     int code=lexicalAnalysis(DFA, input, character, isEnd, answer);
+    cout<<code<<endl;
     for(int i=0;i<answer.size();i++)cout<<answer[i]<<" ";
     //int ** simpleDFA=simplifyDFA(DFA, isEnd);
     return 0;
