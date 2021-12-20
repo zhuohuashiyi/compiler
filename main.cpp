@@ -6,9 +6,7 @@
 #include<stack>
 #include<vector>
 #include<algorithm>
-
 using namespace std;
-
 // 字符12+26+26+10=75
 char mapping[75] = {
         'a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i', 'j', 'k', 'l', 'm', 'n', 'o', 'p', 'q',
@@ -17,6 +15,15 @@ char mapping[75] = {
         '2', '3', '4', '5', '6', '7', '8', '9', '+', '-', '*', '/', ';', ',', '(', ')', '=', ':',
         '>', '<', '~'
 };
+string delimiter[13]={" ","+","-","*","/",",",";","(",")","=",":"};
+int find(string a[],string b){
+    for(int i=0;i<13;i++){
+        if(a[i]==b){
+            return i;
+        }
+    }
+    return  -1;
+}
 int countNFAStates(vector<int>**NFA){
     int answer=0;
     for(int i=0;i<300;i++){
@@ -203,38 +210,38 @@ string generateSuffix(string infix){
     int i;
     for (i = 0; i<infix.size(); i++)
     {
-        if (infix[i] >= '0' && infix[i] <= '9'||infix[i] >= 'a' && infix[i] <= 'z'||infix[i]>='A'&&infix[i]<='Z')      {
+        if (infix[i] >= '0' && infix[i] <= '9'||infix[i] >= 'a' && infix[i] <= 'z'||infix[i]>='A'&&infix[i]<='Z'){
             suffix+=infix[i];
         }
-        else                          //否则不是数字
+        else
         {
-            if (s.empty())            //栈空则入站
+            if (s.empty())
                 s.push(infix[i]);
-            else if (infix[i] == '(')   //左括号入栈
+            else if (infix[i] == '(')
                 s.push(infix[i]);
-            else if (infix[i] == ')')    //如果是右括号，只要栈顶不是左括号，就弹出并输出
+            else if (infix[i] == ')')
             {
                 while (s.top() != '(')
                 {
                     suffix+= s.top();
                     s.pop();
                 }
-                s.pop();                 //弹出左括号，但不输出
+                s.pop();
             }
             else
             {
-                while (prio(infix[i]) <= prio(s.top()))   //栈顶优先级大于等于当前运算符，则输出
+                while (prio(infix[i]) <= prio(s.top()))
                 {
                     suffix+= s.top();
                     s.pop();
-                    if (s.empty())      //栈为空，停止
+                    if (s.empty())
                         break;
                 }
-                s.push(infix[i]);   //把当前运算符入栈
+                s.push(infix[i]);
             }
         }
     }
-    while (!s.empty())        //最后，如果栈不空，则弹出所有元素并输出
+    while (!s.empty())
     {
         suffix+= s.top();
         s.pop();
@@ -361,15 +368,21 @@ int find(vector<char>a, char b){
     }
     return -1;
 }
-int lexicalAnalysis(int **DFA, string input, vector<char>character, vector<int>isEnd, vector<string>&answer){
-    int pos=0;
+int lexicalAnalysis(int **DFA, string input, vector<char>character, vector<int>isEnd, vector<string>&answer,int&pos,int symbol,int &tryNum){
     int nowState=0;
     string s1="";
     while(true){
         if(input[pos]==' '){
             if(isEnd[nowState]){
+                if(symbol==2){
+                    s1="<V," + s1+ ">";
+                }
+                else{
+                    s1="<"+s1+">";
+                }
                 answer.push_back(s1);
                 nowState=0;
+                tryNum=0;
                 s1="";
             }
             else{
@@ -379,16 +392,37 @@ int lexicalAnalysis(int **DFA, string input, vector<char>character, vector<int>i
         }
         if(pos>input.size()-1){
             if(s1.size()!=0){
+                if(symbol==2){
+                    s1="<V," + s1+ ">";
+                }
+                else{
+                    s1="<"+s1+">";
+                }
+                tryNum=0;
                 answer.push_back(s1);
+
             }
             break;
         }
         int t1=find(character, input[pos]);
         if(t1==-1||DFA[nowState][t1]==-1){
             if(isEnd[nowState]){
-                answer.push_back(s1);
-                nowState=0;
-                s1="";
+                if(symbol==1||(pos<input.size()&&find(delimiter, string(1,input[pos]))>=0)){
+                    if(symbol==2){
+                        s1="<V," + s1+ ">";
+                    }
+                    else{
+                        s1="<"+s1+">";
+                    }
+                    answer.push_back(s1);
+                    nowState=0;
+                    tryNum=0;
+                    s1="";
+                }
+                else{
+                    cout<<input[pos]<<" ";
+                    return -2;
+                }
             }
             else{
                 return -1;
@@ -398,7 +432,6 @@ int lexicalAnalysis(int **DFA, string input, vector<char>character, vector<int>i
             nowState=DFA[nowState][t1];
             s1+=input[pos++];
         }
-
     }
     return 0;
 }
@@ -540,23 +573,56 @@ int main() {
     NFAForDelimiter=orNFA(NFAForDelimiter,NFA_14);
     NFAForDelimiter=orNFA(NFAForDelimiter,NFA_15);
     NFAForDelimiterStatesNum=66;
-    wholeNFA=orNFA(NFAForInteger,NFAForIdentifier);
-    wholeNFA=orNFA(wholeNFA, NFAForDelimiter);
-    wholeNFA= orNFA(wholeNFA,NFAForKeyword);
-    wholeNFAStatesNum= countNFAStates(wholeNFA);
-    wholeDFA=
-    /*DFAForInteger= convertDFA(NFAForInteger, indexesForInteger, DFAForIntegerStatesNum, isEndForInteger, NFAForIntegerStatesNum);
+    DFAForInteger= convertDFA(NFAForInteger, indexesForInteger, DFAForIntegerStatesNum, isEndForInteger, NFAForIntegerStatesNum);
     for(int i=0;i<indexesForInteger.size()-1;i++)characterForInteger.push_back(mapping[indexesForInteger[i]]);
     DFAForIdentifier= convertDFA(NFAForIdentifier, indexesForIdentifier, DFAForIdentifierStatesNum, isEndForIdentifier, NFAForIdentifierStatesNum);
     for(int i=0;i<indexesForIdentifier.size()-1;i++)characterForIdentifier.push_back(mapping[indexesForIdentifier[i]]);
     DFAForKeyword= convertDFA(NFAForKeyword, indexesForKeyword, DFAForKeywordStatesNum, isEndForKeyword, NFAForKeywordStatesNum);
     for(int i=0;i<indexesForKeyword.size()-1;i++)characterForKeyword.push_back(mapping[indexesForKeyword[i]]);
     DFAForDelimiter = convertDFA(NFAForDelimiter, indexesForDelimiter, DFAForDelimiterStatesNum, isEndForDelimiter, NFAForDelimiterStatesNum);
-    for(int i=0;i<indexesForDelimiter.size()-1;i++)characterForDelimiter.push_back(mapping[indexesForDelimiter[i]]);*/
-    displayDFA(DFAForDelimiter, DFAForDelimiterStatesNum, characterForDelimiter, isEndForDelimiter);
+    for(int i=0;i<indexesForDelimiter.size()-1;i++)characterForDelimiter.push_back(mapping[indexesForDelimiter[i]]);
+    //displayDFA(DFAForDelimiter, DFAForDelimiterStatesNum, characterForDelimiter, isEndForDelimiter);
     string input="VAR i1,j2,k3;";
-    int code=lexicalAnalysis(DFAForDelimiter, input, characterForDelimiter, isEndForDelimiter, answer);
-    cout<<code<<endl;
-    for(int i=0;i<answer.size();i++)cout<<answer[i]<<" ";
+    int pos=0;
+    int code;
+    int tryNum=0;
+    while(pos<input.size()){
+        code=lexicalAnalysis(DFAForKeyword, input, characterForKeyword, isEndForKeyword, answer,pos,0, tryNum);
+        if(code==-1) tryNum++;
+        else if(code==-2){
+            answer.push_back("error");
+            break;
+        }
+        code=lexicalAnalysis(DFAForDelimiter, input, characterForDelimiter, isEndForDelimiter, answer,pos,1,tryNum);
+        if(code==-1){
+            tryNum++;
+        }
+        else if(code==-2){
+            answer.push_back("error");
+            break;
+        }
+        code=lexicalAnalysis(DFAForIdentifier, input, characterForIdentifier, isEndForIdentifier, answer,pos,2,tryNum);
+        if(code==-1){
+            tryNum++;
+        }
+        else if(code==-2){
+            answer.push_back("error");
+            break;
+        }
+        code=lexicalAnalysis(DFAForInteger, input, characterForInteger, isEndForInteger, answer,pos,3,tryNum);
+        if(code==-1){
+            tryNum++;
+        }
+        else if(code==-2){
+            answer.push_back("error");
+            break;
+        }
+        if(tryNum>=4){
+            answer.push_back("error");
+            break;
+        }
+        else continue;
+    }
+    for(int i=0;i<answer.size();i++)cout<<answer[i];
     return 0;
 }
