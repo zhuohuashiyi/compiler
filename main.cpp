@@ -7,6 +7,7 @@
 #include<stack>
 #include<vector>
 #include<algorithm>
+#include<stdlib.h>
 using namespace std;
 // 字符12+26+26+10+1=75
 char mapping[75] = {    //所有可能出现的字符，'~'代表空字符ε
@@ -679,5 +680,6 @@ int main() {
     for(int i=0;i<answer.size();i++)cout<<answer[i];
     cout<<endl;
     lexicalAnalyzer();
+    system("pause");
     return 0;
 }
