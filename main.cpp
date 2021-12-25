@@ -282,16 +282,20 @@ string generateSuffix(string infix){   //生成后缀表达式的算法
 }
 vector<int>findEqual(vector<int>**NFA, int init){   //寻找init状态的等价集，即在NFA中，init经过若干个空字符可以大大的状态集合
     vector<int>answer;
+    stack<int>unused;
     answer.push_back(init);
-    int history[500]={0};
-    for(int i=0;i<answer.size();i++){
-        if(history[answer[i]]==0){
-            vector<int>temp1=NFA[answer[i]][74];
-            for(int j=0;j<temp1.size();j++){
-                if(temp1[j]>0)answer.push_back(temp1[j]);
+    unused.push(init);
+    while(!unused.empty()){
+        int t1=unused.top();
+        unused.pop();
+        vector<int>temp1=NFA[t1][74];
+        for(int j=0;j<temp1.size();j++){
+            if(temp1[j]>=0){
+                answer.push_back(temp1[j]);
+                unused.push(temp1[j]);
             }
-            history[answer[i]]=1;
         }
+
     }
     return answer;
 }
@@ -312,7 +316,11 @@ int findSubArray(vector<vector<int>>temp, vector<int>temp1){  //对于一个二�
     }
     return -1;
 }
-
+void UnionVector(vector<int>&left,vector<int>right){
+    for(int i=0;i<right.size();i++){
+        if(find(left,right[i])==-1)left.push_back(right[i]);
+    }
+}
 int **convertDFA(vector<int>**NFA, vector<int>&indexes, int &statesNum, vector<int>&isEnd, int num1){
     /*
      该函数根据NFA生成DFA
@@ -345,7 +353,9 @@ int **convertDFA(vector<int>**NFA, vector<int>&indexes, int &statesNum, vector<i
     vector<int>temp= findEqual(NFA, 0);
     states.push_back(temp);
     int t2=find(temp, num1-1);   //只有该状态集包括NFA的状态才能成为DFA的终态
-    if(t2==-1)isEnd.push_back(0);
+    if(t2==-1){
+        isEnd.push_back(0);
+    }
     else isEnd.push_back(1);
     sign.push_back(1);    //sign函数标志对应的状态有没有经过计算
     while(true){
@@ -359,14 +369,17 @@ int **convertDFA(vector<int>**NFA, vector<int>&indexes, int &statesNum, vector<i
             }
             if(temp1.empty())continue;
             vector<int>temp3= findEqual(NFA, temp1[0]);
-            for(int j=1;j<temp3.size();j++){
-                temp1.push_back(temp3[j]);
+            for(int i=1;i<temp1.size();i++){
+                UnionVector(temp3, findEqual(NFA,temp1[i]));
             }
+            UnionVector(temp1,temp3);
             if(findSubArray(states, temp1)==-1){  //保证循环能退出
                 states.push_back(temp1);
                 sign.push_back(0);
                 int t2=find(temp1, num1-1);
-                if(t2==-1)isEnd.push_back(0);
+                if(t2==-1){
+                    isEnd.push_back(0);
+                }
                 else isEnd.push_back(1);
             }
             DFA[tNum][i]=findSubArray(states, temp1);  //DFA赋值
@@ -571,7 +584,7 @@ void lexicalAnalyzer(){
     NFAForDelimiter=orNFA(NFAForDelimiter,NFA_1);
     NFAForDelimiter=orNFA(NFAForDelimiter,NFA_14);
     NFAForDelimiter=orNFA(NFAForDelimiter,NFA_15);
-    NFAForDelimiterStatesNum=66;
+    NFAForDelimiterStatesNum= countNFAStates(NFAForDelimiter);
     //以上生成四种类别的NFA
     DFAForInteger= convertDFA(NFAForInteger, indexesForInteger, DFAForIntegerStatesNum, isEndForInteger, NFAForIntegerStatesNum);
     for(int i=0;i<indexesForInteger.size()-1;i++)characterForInteger.push_back(mapping[indexesForInteger[i]]);
@@ -579,9 +592,13 @@ void lexicalAnalyzer(){
     for(int i=0;i<indexesForIdentifier.size()-1;i++)characterForIdentifier.push_back(mapping[indexesForIdentifier[i]]);
     DFAForKeyword= convertDFA(NFAForKeyword, indexesForKeyword, DFAForKeywordStatesNum, isEndForKeyword, NFAForKeywordStatesNum);
     for(int i=0;i<indexesForKeyword.size()-1;i++)characterForKeyword.push_back(mapping[indexesForKeyword[i]]);
+
     DFAForDelimiter = convertDFA(NFAForDelimiter, indexesForDelimiter, DFAForDelimiterStatesNum, isEndForDelimiter, NFAForDelimiterStatesNum);
     for(int i=0;i<indexesForDelimiter.size()-1;i++)characterForDelimiter.push_back(mapping[indexesForDelimiter[i]]);
    //以上用四种NFA生成四种DFA
+
+    //displayNFA(NFAForDelimiter);
+   // displayDFA(DFAForDelimiter, DFAForDelimiterStatesNum, characterForDelimiter, isEndForDelimiter);
      string input;
     cout<<"Please enter the lexical rule:"<<endl;
     getline(cin,input);
@@ -632,7 +649,7 @@ void lexicalAnalyzer(){
 }
 
 int main() {
-    string str="l(l|d)*";
+   /* string str="l(l|d)*";
     int stateNum1,stateNum2;
     vector<int>**NFA= generateNFA(generateSuffix(str), stateNum1);
     cout<<"NFA as belows:"<<endl;
@@ -660,7 +677,7 @@ int main() {
     if(code==-1)answer.push_back("error");
     cout<<"string "<<input2<<" analysis result as belows:"<<endl;
     for(int i=0;i<answer.size();i++)cout<<answer[i];
-    cout<<endl;
+    cout<<endl;*/
     lexicalAnalyzer();
     return 0;
 }

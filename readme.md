@@ -191,13 +191,17 @@ indexes是DFA中纵坐标对应字符在mapping中的位置，isEnd表示对应�
 接下来我们进行全局测试
 - test1 ```VAR i1,j2,k3;```
 ![test1](./asserts/test1.png)
+
 - test2 ```VAR i1,j2,3k;```
 ![test2](./asserts/test2.png)
+
 - test3 ```IF(i>=5)```
 ![test3](./asserts/test3.png)
+
 - test4 ```VAR a=1,b=2,c=a*b;```
 ![test4](./asserts/test4.png)
-- test5 ```WHILE(I>=04)```
+
+- test5 ```WHILE(I>04)```
 ![tes5](./asserts/test5.png)
 
 ### 总结
