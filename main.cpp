@@ -458,7 +458,7 @@ int lexicalAnalysis(int **DFA, string input, vector<char>character, vector<int>i
                     s1="";
                 }
                 else{
-                    cout<<input[pos]<<" ";   //这里直接返回-2，表示因为两个非界符的词法单元之间无界符的错误
+                    //这里直接返回-2，表示因为两个非界符的词法单元之间无界符的错误
                     return -2;
                 }
             }
@@ -649,7 +649,7 @@ void lexicalAnalyzer(){
 }
 
 int main() {
-   /* string str="l(l|d)*";
+    string str="l(l|d)*";
     int stateNum1,stateNum2;
     vector<int>**NFA= generateNFA(generateSuffix(str), stateNum1);
     cout<<"NFA as belows:"<<endl;
@@ -677,7 +677,7 @@ int main() {
     if(code==-1)answer.push_back("error");
     cout<<"string "<<input2<<" analysis result as belows:"<<endl;
     for(int i=0;i<answer.size();i++)cout<<answer[i];
-    cout<<endl;*/
+    cout<<endl;
     lexicalAnalyzer();
     return 0;
 }

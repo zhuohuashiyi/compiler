@@ -126,16 +126,18 @@ NFA不适合作为词法分析的自动机，其有两个缺点：
 该集合包括所有在NFA中init经过若干个空字符能够到达的状态。
 ```c++
     answer.push_back(init);
-    int history[500]={0};
-    for(int i=0;i<answer.size();i++){
-        if(history[answer[i]]==0){
-            vector<int>temp1=NFA[answer[i]][74];
-            for(int j=0;j<temp1.size();j++){
-                if(temp1[j]>0)answer.push_back(temp1[j]);
-            }
-            history[answer[i]]=1;
+    unused.push(init);
+    while(!unused.empty()){
+        int t1=unused.top();
+        unused.pop();
+        vector<int>temp1=NFA[t1][74];
+        for(int j=0;j<temp1.size();j++){
+        if(temp1[j]>=0){
+            answer.push_back(temp1[j]);
+            unused.push(temp1[j]);
         }
     }
+}
 ```
 history数组用来表示对应的状态有没有经过进一步的搜索
 
@@ -147,7 +149,9 @@ history数组用来表示对应的状态有没有经过进一步的搜索
 的，即为最后一个状态，但是DFA的状态不唯一，所有包含了原先NFA终态的状态
 集都是DFA的终态。生成DFA的函数签名如下：
 ```c++
-int **convertDFA(vector<int>**NFA, vector<int>&indexes, int &statesNum, vector<int>&isEnd, int num1)
+int **convertDFA(vector<int>**NFA, vector<int>&indexes,
+                 int &statesNum, vector<int>&isEnd, 
+                 int num1)
 ```
 indexes是DFA中纵坐标对应字符在mapping中的位置，isEnd表示对应的状态
 是否是终态。
@@ -180,28 +184,40 @@ indexes是DFA中纵坐标对应字符在mapping中的位置，isEnd表示对应�
 
 ### 运行结果
 我们用一个简单的正规表达式`l(l|d)*`来测试以下程序的各子程序。
+
 我们输出得到的NFA如下图![NFA](./asserts/NFA.png)
+
 注意以上图中~表示空字符ε，NFA的终态是状态9。
 
-由NFA生成的DFA如下![DFA](./asserts/DFA.png)
+由NFA生成的DFA如下
+
+![DFA](./asserts/DFA.png)
+
 注意-1只是一个占位符，终态有状态1,2,3
 
-由该DFA分别识别字符串![result](./asserts/result.png)
+由该DFA分别识别字符串
+
+![result](./asserts/result.png)
 
 接下来我们进行全局测试
 - test1 ```VAR i1,j2,k3;```
+
 ![test1](./asserts/test1.png)
 
 - test2 ```VAR i1,j2,3k;```
+
 ![test2](./asserts/test2.png)
 
 - test3 ```IF(i>=5)```
+
 ![test3](./asserts/test3.png)
 
 - test4 ```VAR a=1,b=2,c=a*b;```
+
 ![test4](./asserts/test4.png)
 
 - test5 ```WHILE(I>04)```
+
 ![tes5](./asserts/test5.png)
 
 ### 总结
